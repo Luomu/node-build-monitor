@@ -1,3 +1,5 @@
+const spawn = require('child_process').spawn;
+
 var async = require('async'),
     events = require('events'),
     log = function (text, debug) {
@@ -153,6 +155,7 @@ module.exports = function () {
     };
     self.plugins = [];
     self.currentBuilds = [];
+    self.lastStateOfEachDefinition = [];
 
     self.configure = function (config) {
         self.configuration = config;
@@ -160,6 +163,22 @@ module.exports = function () {
 
     self.watchOn = function (plugin) {
         self.plugins.push(plugin);
+    };
+
+    self.notifyBuildBroken = function(build) {
+        const script = self.configuration.scriptToRunOnBuildBroken;
+        if (script) {
+            const breaker = build.requestedFor.replace(".", " ");
+            spawn('sh', [script, breaker]);
+        }
+    }
+
+    self.notifyBuildFixed = function(build) {
+        const script = self.configuration.scriptToRunOnBuildFixed;
+        if (script) {
+            const fixer = build.requestedFor.replace(".", " ");
+            spawn('sh', [script, fixer]);
+        }
     };
 
     self.run = function () {
@@ -210,6 +229,39 @@ module.exports = function () {
                 log('builds changed', self.configuration.debug);
 
                 self.emit('buildsChanged', detectChanges(self.currentBuilds, allBuilds));
+
+                //get latest state of every definition
+                var newStates = [];
+                allBuilds.forEach(build => {
+                    const lastState = newStates[build.definition];
+                    if (!lastState || build.finishedAt > lastState.finishedAt) {
+                        newStates[build.definition] = build;
+                    }
+                });
+
+                //check for state changes to broken/fixed
+                var fixedBuilds = [];
+                var brokenBuilds = [];
+                newStates.forEach(newState => {
+                    const prevState = self.lastStateOfEachDefinition[newState.definition];
+                    if (prevState) {
+                        if (prevState.status === 'Red' && newState.status === 'Green') {
+                            fixedBuilds.add(newState);
+                        }
+                        if (prevState.status != 'Red' && newState.status == 'Red') {
+                            brokenBuilds.add(newState);
+                        }
+                    }
+                });
+                self.lastStateOfEachDefinition = newStates;
+
+                //report max one fix/breakage per update
+                if (fixedBuilds.length > 0) {
+                    self.notifyBuildFixed(fixedBuilds[0]);
+                }
+                else if (brokenBuilds.length > 0) {
+                    self.notifyBuildBroken(brokenBuilds[0]);
+                }
 
                 self.currentBuilds = allBuilds;
             }
