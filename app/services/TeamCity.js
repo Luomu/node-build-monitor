@@ -114,6 +114,7 @@ module.exports = function () {
             return null;
         },
         getStatus = function (build) {
+            if (build.state == 'running') return "Blue";
             if (build.running) return "Blue";
             if (build.canceledInfo) return "Gray";
             if (build.failedToStart) return "Red";
@@ -126,6 +127,7 @@ module.exports = function () {
             return null;
         },
         getStatusText = function (build) {
+            if (build.state == 'running') return "Running";
             if (build.running) return "Running";
             if (build.canceledInfo) return "Canceled";
             if (build.failedToStart) return "Failed to Start";
@@ -155,7 +157,7 @@ module.exports = function () {
                 project: res.buildType.projectName,
                 definition: res.buildType.name + '|' + res.branchName,
                 number: res.number,
-                isRunning: res.running === true,
+                isRunning: res.state == 'running',
                 startedAt: parseStartDate(res),
                 finishedAt: parseFinishDate(res),
                 requestedFor: getRequestedBy(res),
