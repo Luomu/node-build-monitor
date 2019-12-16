@@ -24,6 +24,7 @@ module.exports = function () {
             if(self.configuration.branch) {
                 locators.push('branch:' + self.configuration.branch);
             }
+            locators.push('lookupLimit:10');
             if(status) {
                 locators.push(status + ':true');
             }
