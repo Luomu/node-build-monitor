@@ -170,7 +170,7 @@ module.exports = function () {
             return {
                 id: res.buildTypeId + '|' + res.number,
                 project: res.buildType.projectName,
-                definition: res.buildType.name + '|' + res.branchName,
+                definition: res.buildType.name, // + '|' + res.branchName,
                 number: res.number,
                 isRunning: res.state == 'running',
                 startedAt: parseStartDate(res),
