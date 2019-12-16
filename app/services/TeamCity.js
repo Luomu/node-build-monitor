@@ -9,10 +9,14 @@ module.exports = function () {
             return array.map(selector).reduce(function (x, y) { return x.concat(y); }, []);
         },
         getBuildsUrl = function(status) {
-            var url =  self.configuration.url +
-                (self.configuration.useGuest === true ? '/guestAuth' : '/httpAuth') +
-                '/app/rest/buildTypes/id:' + self.configuration.buildConfigurationId +
-                '/builds';
+            var url =  self.configuration.url;
+
+            if (!self.configuration.access_token) {
+                url += (self.configuration.useGuest === true ? '/guestAuth' : '/httpAuth');
+            }
+
+            //'/app/rest/buildTypes/id:' + self.configuration.buildConfigurationId +
+            url += '/app/rest/builds/';
             var locators = [];
             if(self.configuration.reportFailedToStart) {
                 locators.push('failedToStart:any');
@@ -46,7 +50,10 @@ module.exports = function () {
             url: url,
             username: self.configuration.username,
             password: self.configuration.password,
-            headers: {Accept: 'application/json'}
+            headers: {
+                Accept: 'application/json',
+                Authorization: 'Bearer ' + self.configuration.access_token,
+            }
           }, callback);
         },
         requestBuilds = function (callback) {
