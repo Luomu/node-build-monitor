@@ -17,7 +17,14 @@ module.exports = function () {
 
             //'/app/rest/buildTypes/id:' + self.configuration.buildConfigurationId +
             url += '/app/rest/builds/';
+
             var locators = [];
+            if(self.configuration.project) {
+                locators.push('project:' + self.configuration.project);
+            }
+            if(self.configuration.affectedProject) {
+                locators.push('affectedProject:' + self.configuration.affectedProject);
+            }
             if(self.configuration.reportFailedToStart) {
                 locators.push('failedToStart:any');
             }
